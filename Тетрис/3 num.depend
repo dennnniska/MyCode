@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1664994670 source:c:\users\msard\desktop\3 num\main.cpp
+	<SFML/Graphics.hpp>
+	<fstream>
+	<iostream>
+	<conio.h>
+
