@@ -204,9 +204,10 @@ void MainWindow::on_but_save_clicked()
         for(auto j = par[(*iter)].begin(); j != par[(*iter)].end(); j++){
             std::string fir = (*iter)->name.toLocal8Bit().constData();
             std::string sec = (*j).first->name.toLocal8Bit().constData();
-            fout << fir << " <-> " << sec << " " << (*j).second << std::endl;
+            fout << "<" << fir << "><" << sec << "> " << (*j).second << std::endl;
         }
     }
+    QMessageBox::warning(this, "Ошибка", "Файл сохранен");
 }
 
 
@@ -335,5 +336,153 @@ void MainWindow::on_but_down_clicked()
         }
         del_new[name_uz]= {x, y};
     }
+    if (fin.eof()){
+        QMessageBox::warning(this, "Ошибка", "Нет колличества ребер в файле");
+        return;
+    }
+    fin >> e;
+    for (int i = 0; i < e.size(); i++){
+            if( e[i] < '0' || e[i] > '9'){
+                QMessageBox::warning(this, "Ошибка", "Нет колличества ребер в файле");
+                return;
+            }
+    }
+    Qe = QString::fromStdString(e);
+    size = Qe.toInt();
+    int i;
+    for(i = 0; !fin.eof() && i < size; i++){
+        std::getline(fin, e);
+        if (e.size() == 0 || e[0] != '<'){
+            QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+            del_new.clear();
+            par_new.clear();
+            return;
+        }
+        std::string fir = "";
+        std::string sec = "";
+        std::string ch = "";
+        for(j = 1; e[j] != '>' && j < e.size(); j++){
+            fir += e[j];
+        }
+        if(j >= e.size()-1){
+            QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+            del_new.clear();
+            par_new.clear();
+            return;
+        }
+        j++;
+        if(e[j] != '<'){
+            QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+            del_new.clear();
+            par_new.clear();
+            return;
+        }
+        for(j; e[j] != '>' && j < e.size(); j++){
+            sec += e[j];
+        }
+        if(j >= e.size()){
+            QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+            del_new.clear();
+            par_new.clear();
+            return;
+        }
+        j++;
+        if(e[j] == ' '){
+            j++;
+        }
+        for(j; j < e.size(); j++){
+            ch += e[j];
+        }
+        for (int k = 0; k < ch.size(); i++){
+                if( ch[k] < '0' || ch[k] > '9'){
+                    QMessageBox::warning(this, "Ошибка", "Вес ребра не число");
+                    del_new.clear();
+                    par_new.clear();
+                    return;
+                }
+        }
+        if(ch.size() == 0){
+            ch = "1";
+        }
+        int ch_int = QString::fromStdString(ch).toInt();
+        auto it1 = del_new.find(fir);
+        auto it2 = del_new.find(sec);
+        if (it1 == del_new.end() || it2 == del_new.end()){
+            QMessageBox::warning(this, "Ошибка", "Ребра содержат не сущ. узлы");
+            del_new.clear();
+            par_new.clear();
+            return;
+        }
+        bool f = false;
+        for (auto it = par_new[fir].begin(); it !=par_new[fir].end(); it++){
+            if((*it).first == sec && (*it).second != ch_int){
+                QMessageBox::warning(this, "Ошибка", "В файле содержатся два одинаковых ребра");
+                del_new.clear();
+                par_new.clear();
+                return;
+            }
+            if((*it).first == sec && (*it).second == ch_int){
+                f = true;
+            }
+        }
+        if(!f){
+            par_new[fir].append({sec, ch_int});
+            par_new[sec].append({fir, ch_int});
+        }
+    }
+    if(!fin.eof() && i != size){
+        QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+        del_new.clear();
+        par_new.clear();
+        return;
+    }
+    for(auto iter = del.begin(); del.end()!= iter; iter++){
+        delete *iter;
+    }
+    del.clear();
+    par.clear();
+    kol = 0;
+    for(auto iter = del_new.begin(); del_new.end()!= iter; iter++){
+        kol++;
+        QString name =  QString::fromStdString(iter.key());
+        QString fname = " ";
+        auto it = del.find(name);
+        if(it != del.end()){
+            QMessageBox::warning(this, "Ошибка", "Узел с именем " + name + " уже существует");
+            return;
+        }
+        MoveItem *item = new MoveItem(0, kol, name, fname);        // Создаём графический элемента
+        item->setPos(iter->first,    // Устанавливаем случайную позицию элемента
+                     iter->second);
+        scene->addItem(item); // Добавляем элемент на графическую сцену
+        del[name] = item;
+        item->del = &par;
+    }
+    for(auto iter = par_new.begin(); iter != par_new.end(); iter++){
+        for(auto ite = iter->begin(); ite != iter->end(); ite++){
+            bool ff = false;
+            QString first = QString::fromStdString(iter.key());
+            QString second = QString::fromStdString(ite->first);
+            for (auto iterat = par[del[first]].begin(); iterat != par[del[second]].end(); iterat++){
+                if (iterat->first == del[second]){
+                    iterat->second = ite->second;
+                    ff = true;
+                    break;
+                }
+            }
+            for (auto iterat = par[del[second]].begin(); iterat != par[del[second]].end(); iterat++){
+                if (iterat->first == del[first]){
+                    iterat->second = ite->second;
+                    ff = true;
+                    break;
+                }
+            }
+            if (!ff){
+                par[del[first]].append({del[second], ite->second});
+                par[del[second]].append({del[first], ite->second});
+            }
+        }
+    }
+
 }
 
