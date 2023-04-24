@@ -59,8 +59,8 @@ void MainWindow::on_pushButton_clicked()
         return;
     }
     MoveItem *item = new MoveItem(0, kol, name, fname);        // Создаём графический элемента
-    item->setPos(randomBetween(30, 470),    // Устанавливаем случайную позицию элемента
-                 randomBetween(30,470));
+    item->setPos(randomBetween(0, 500),    // Устанавливаем случайную позицию элемента
+                 randomBetween(0,500));
     scene->addItem(item); // Добавляем элемент на графическую сцену
     del[name] = item;
     item->del = &par;
@@ -177,12 +177,12 @@ void MainWindow::on_but_save_clicked()
 {
     QString name = ui->save->text();
     if(name.size() < 5){
-        QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .txt");
+        QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .xml");
         return;
     }
     if (!((name.size()> 4 && name[name.size()-1] =='t' && name[name.size()-3] =='t'&& name[name.size()-2] =='x' && name[name.size()-4] == '.') ||(name.size()> 4 && name[name.size()-1] =='l' && name[name.size()-3] =='x' && name[name.size()-2] =='m' && name[name.size()-4] == '.')
             || (name.size()> 5 && name[name.size()-1] =='n' && name[name.size()-3] =='s'&& name[name.size()-2] =='o' && name[name.size()-5] == '.' && name[name.size()-4] =='j'))){
-        QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .txt");
+        QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .xml");
         return;
     }
     std::string name_s = name.toLocal8Bit().constData();
@@ -199,7 +199,11 @@ void MainWindow::on_but_save_clicked()
         int y = (*iter)->pos().toPoint().y();
         fout << "<" << name_uz <<"> pos(" << x << ";" << y << ")" << std::endl;
     }
-    fout << par.size() << std::endl;
+    int kol_par = 0;
+    for(auto iter = del.begin(); iter!= del.end(); iter++){
+        kol_par+= par[(*iter)].size();
+    }
+    fout << kol_par << std::endl;
     for(auto iter = del.begin(); iter != del.end(); iter++){
         for(auto j = par[(*iter)].begin(); j != par[(*iter)].end(); j++){
             std::string fir = (*iter)->name.toLocal8Bit().constData();
@@ -208,6 +212,7 @@ void MainWindow::on_but_save_clicked()
         }
     }
     QMessageBox::warning(this, "Ошибка", "Файл сохранен");
+    fout.close();
 }
 
 
@@ -239,12 +244,12 @@ void MainWindow::on_but_down_clicked()
 {
     QString name = ui->down->text();
     if(name.size() < 5){
-        QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .txt");
+        QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .xml");
         return;
     }
     if (!((name.size()> 4 && name[name.size()-1] =='t' && name[name.size()-3] =='t'&& name[name.size()-2] =='x' && name[name.size()-4] == '.') ||(name.size()> 4 && name[name.size()-1] =='l' && name[name.size()-3] =='x' && name[name.size()-2] =='m' && name[name.size()-4] == '.')
             || (name.size()> 5 && name[name.size()-1] =='n' && name[name.size()-3] =='s'&& name[name.size()-2] =='o' && name[name.size()-5] == '.' && name[name.size()-4] =='j'))){
-        QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .txt");
+        QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .xml");
         return;
     }
     std::string name_s = name.toLocal8Bit().constData();
@@ -261,19 +266,21 @@ void MainWindow::on_but_down_clicked()
         return;
     }
     std::string e;
-    fin >> e;
+    std::getline(fin, e);
     for (int i = 0; i < e.size(); i++){
             if( e[i] < '0' || e[i] > '9'){
                 QMessageBox::warning(this, "Ошибка", "Нет колличества узлов в файле");
                 return;
             }
     }
+    qDebug() << QString::fromStdString(e);
     QString Qe = QString::fromStdString(e);
     int size = Qe.toInt(), j = 0;
     for (int i = 0; i < size && !fin.eof(); i++){
         std::getline(fin, e);
+        qDebug() << QString::fromStdString(e);
         if (e.size() == 0 || e[0] != '<'){
-            QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+            QMessageBox::warning(this, "Ошибка", "Файл не корректен нет начальной <");
             del_new.clear();
             par_new.clear();
             return;
@@ -283,7 +290,7 @@ void MainWindow::on_but_down_clicked()
             name_uz += e[j];
         }
         if (j == e.size()){
-            QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+            QMessageBox::warning(this, "Ошибка", "Файл не корректен нет конечной >");
             del_new.clear();
             par_new.clear();
             return;
@@ -291,35 +298,53 @@ void MainWindow::on_but_down_clicked()
         j++;
         int x = 0, y = 0;
         if (e.size() < j + 8 || (e[j+1] != 'p' || e[j+2] != 'o' || e[j+3] != 's' || e[j+4] != '(')){
-            QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+            QMessageBox::warning(this, "Ошибка", "Файл не корректен нет pos");
             del_new.clear();
             par_new.clear();
             return;
         }
         j += 5;
+        bool min = false;
+        if(e[j] == '-'){
+            min = true;
+            j++;
+        }
         for (j;j < e.size() && e[j]!=';'; j++){
             if(e[j] < '0' || e[j] > '9'){
-                QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+                QMessageBox::warning(this, "Ошибка", "Файл не корректен нет позиции");
                 del_new.clear();
                 par_new.clear();
                 return;
             }
             x = x*10 + e[j] - '0';
+            if(min){
+                x = -x;
+            }
         }
         if (e.size() == j || e[j-1] == '('){
-            QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+            QMessageBox::warning(this, "Ошибка", "Файл не корректен нет позиции");
             del_new.clear();
             par_new.clear();
             return;
         }
+        j++;
+        min = false;
+        if(e[j] == '-'){
+            min = true;
+            j++;
+        }
         for (j;j < e.size() && e[j]!=')'; j++){
             if(e[j] < '0' || e[j] > '9'){
-                QMessageBox::warning(this, "Ошибка", "Файл не корректен");
+                QMessageBox::warning(this, "Ошибка", "Файл не корректен нет позиции y");
+                qDebug() << e[j];
                 del_new.clear();
                 par_new.clear();
                 return;
             }
             y = y*10 + e[j] - '0';
+            if(min){
+                y =-y;
+            }
         }
         if(j != e.size()-1){
             QMessageBox::warning(this, "Ошибка", "Файл не корректен");
@@ -340,7 +365,8 @@ void MainWindow::on_but_down_clicked()
         QMessageBox::warning(this, "Ошибка", "Нет колличества ребер в файле");
         return;
     }
-    fin >> e;
+    std::getline(fin, e);
+    qDebug() <<QString::fromStdString(e);
     for (int i = 0; i < e.size(); i++){
             if( e[i] < '0' || e[i] > '9'){
                 QMessageBox::warning(this, "Ошибка", "Нет колличества ребер в файле");
@@ -352,6 +378,7 @@ void MainWindow::on_but_down_clicked()
     int i;
     for(i = 0; !fin.eof() && i < size; i++){
         std::getline(fin, e);
+        qDebug() << QString::fromStdString(e);
         if (e.size() == 0 || e[0] != '<'){
             QMessageBox::warning(this, "Ошибка", "Файл не корректен");
             del_new.clear();
@@ -377,6 +404,7 @@ void MainWindow::on_but_down_clicked()
             par_new.clear();
             return;
         }
+        j++;
         for(j; e[j] != '>' && j < e.size(); j++){
             sec += e[j];
         }
@@ -393,7 +421,7 @@ void MainWindow::on_but_down_clicked()
         for(j; j < e.size(); j++){
             ch += e[j];
         }
-        for (int k = 0; k < ch.size(); i++){
+        for (int k = 0; k < ch.size(); k++){
                 if( ch[k] < '0' || ch[k] > '9'){
                     QMessageBox::warning(this, "Ошибка", "Вес ребра не число");
                     del_new.clear();
@@ -463,7 +491,7 @@ void MainWindow::on_but_down_clicked()
             bool ff = false;
             QString first = QString::fromStdString(iter.key());
             QString second = QString::fromStdString(ite->first);
-            for (auto iterat = par[del[first]].begin(); iterat != par[del[second]].end(); iterat++){
+            for (auto iterat = par[del[first]].begin(); iterat != par[del[first]].end(); iterat++){
                 if (iterat->first == del[second]){
                     iterat->second = ite->second;
                     ff = true;
@@ -483,6 +511,6 @@ void MainWindow::on_but_down_clicked()
             }
         }
     }
-
+    fin.close();
 }
 

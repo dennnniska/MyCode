@@ -44,7 +44,7 @@ void MoveItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
         painter->drawText(((*iter).first->pos() - this->pos())/2, int_to_string(iter->second));
         painter->setPen(Qt::black);
     }
-    painter->drawText(QPointF(0, 0),name);
+    painter->drawText(QPointF(-10, 0),name);
     widget->update();
     qDebug()<< del->size();
 }
