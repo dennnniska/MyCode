@@ -187,7 +187,7 @@ void MainWindow::on_but_save_clicked()
     }
     std::string name_s = name.toLocal8Bit().constData();
     std::ofstream fout;
-    fout.open(name_s);
+    fout.open("/Users/macbook/"+name_s);
     if (fout.is_open() == false){
         QMessageBox::warning(this, "Ошибка", "Не удается открыть файл");
         return;
@@ -195,9 +195,10 @@ void MainWindow::on_but_save_clicked()
     fout << del.size() << std::endl;
     for (auto iter = del.begin(); iter != del.end(); iter++){
         std::string name_uz = (*iter)->name.toLocal8Bit().constData();
+        std::string fname = (*iter)->fname.toLocal8Bit().constData();
         int x = (*iter)->pos().toPoint().x();
         int y = (*iter)->pos().toPoint().y();
-        fout << "<" << name_uz <<"> pos(" << x << ";" << y << ")" << std::endl;
+        fout << "<" << name_uz << "><"<< fname <<"> pos(" << x << ";" << y << ")" << std::endl;
     }
     int kol_par = 0;
     for(auto iter = del.begin(); iter!= del.end(); iter++){
@@ -230,7 +231,7 @@ void MainWindow::on_but_change_clicked()
     }
     it = del.find(new_);
     if(it != del.end()){
-        QMessageBox::warning(this, "Ошибка", "Eptk с названием " + old + " уже существует");
+        QMessageBox::warning(this, "Ошибка", "Узел с названием " + new_ + " уже существует");
         return;
     }
     del[old]->name = new_;
@@ -254,13 +255,14 @@ void MainWindow::on_but_down_clicked()
     }
     std::string name_s = name.toLocal8Bit().constData();
     std::ifstream fin;
-    fin.open(name_s);
+    fin.open("/Users/macbook/"+name_s);
     if (fin.is_open() == false){
         QMessageBox::warning(this, "Ошибка", "Не удается открыть файл");
         return;
     }
     QMap<std::string, QList<std::pair<std::string, int>>> par_new;
     QMap<std::string ,std::pair<int, int>> del_new;
+    QMap<std::string , std::string>fname_op;
     if (fin.eof()){
         QMessageBox::warning(this, "Ошибка", "Файл пуст");
         return;
@@ -294,6 +296,18 @@ void MainWindow::on_but_down_clicked()
             del_new.clear();
             par_new.clear();
             return;
+        }
+        j++;
+        if(e[j] != '<'){
+            QMessageBox::warning(this, "Ошибка", "Файл не корректен нет описания узла");
+            del_new.clear();
+            par_new.clear();
+            return;
+        }
+        j++;
+        std::string fname = "";
+        for (j; j < e.size() && e[j] != '>'; j++){
+            fname += e[j];
         }
         j++;
         int x = 0, y = 0;
@@ -360,6 +374,7 @@ void MainWindow::on_but_down_clicked()
             return;
         }
         del_new[name_uz]= {x, y};
+        fname_op[name_uz] = fname;
     }
     if (fin.eof()){
         QMessageBox::warning(this, "Ошибка", "Нет колличества ребер в файле");
@@ -473,7 +488,7 @@ void MainWindow::on_but_down_clicked()
     for(auto iter = del_new.begin(); del_new.end()!= iter; iter++){
         kol++;
         QString name =  QString::fromStdString(iter.key());
-        QString fname = " ";
+        QString fname = QString::fromStdString(fname_op[iter.key()]);
         auto it = del.find(name);
         if(it != del.end()){
             QMessageBox::warning(this, "Ошибка", "Узел с именем " + name + " уже существует");
