@@ -103,6 +103,16 @@
       <item>
        <widget class="QLineEdit" name="new_2"/>
       </item>
+      <item>
+       <widget class="QLabel" name="label_13">
+        <property name="text">
+         <string>Описание</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="new_fname"/>
+      </item>
      </layout>
     </item>
     <item>

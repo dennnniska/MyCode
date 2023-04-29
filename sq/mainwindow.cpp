@@ -220,11 +220,22 @@ void MainWindow::on_but_save_clicked()
     fout.close();
 }
 
-// новое имя узла
+// новое имя узла или изменить описание
 void MainWindow::on_but_change_clicked()
 {
     QString old = ui->old->text();//старое
     QString new_ = ui->new_2->text();//новое
+    QString fname = ui->new_fname->text();
+    if(new_.size() == 0){
+        auto it = del.find(old);
+        if(it == del.end()){//есть ли старое имя
+            QMessageBox::warning(this, "Ошибка", "Узла с названием " + old + " нет");
+            return;
+        }
+        del[old]->fname = fname;
+        QMessageBox::warning(this, " ", "Описание изменино");
+        return;
+    }
     auto it = del.find(old);
     if(it == del.end()){//есть ли старое имя
         QMessageBox::warning(this, "Ошибка", "Узла с названием " + old + " нет");
