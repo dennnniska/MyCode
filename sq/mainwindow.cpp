@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
+// празделят строку на подстроки через , [asd,fgh,jkl]->[asd][fgh][hjk]
 QVector<QString> get_mas(QString a){
     QVector<QString>ans;
     QString b = "";
@@ -47,13 +47,13 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-
+// создание нового узла
 void MainWindow::on_pushButton_clicked()
 {
     kol++;
-    QString name =  ui->name->text();
-    QString fname = ui->fname->text();
-    auto it = del.find(name);
+    QString name =  ui->name->text();//имя
+    QString fname = ui->fname->text();//описание
+    auto it = del.find(name); // проверка на повторение имя
     if(it != del.end()){
         QMessageBox::warning(this, "Ошибка", "Узел с именем " + name + " уже существует");
         return;
@@ -67,7 +67,7 @@ void MainWindow::on_pushButton_clicked()
 }
 
 
-
+// удаляем все элементы
 void MainWindow::on_pushButton_2_clicked()
 {
     for(auto iter = del.begin(); del.end()!= iter; iter++){
@@ -78,11 +78,12 @@ void MainWindow::on_pushButton_2_clicked()
     kol = 0;
 }
 
-
+//удаляем один узел
 void MainWindow::on_Button_del_clicked()
 {
     QString del_st = ui->del_uz->text();
     QVector<QString> delp = get_mas(del_st);
+    //ищем все ребра связанные с ним и удаляем их
     for(int k = 0; k < delp.size(); k++){
     auto it = del.find(delp[k]);
     if (it != del.end()){
@@ -96,35 +97,36 @@ void MainWindow::on_Button_del_clicked()
         par[del[delp[k]]].clear();
         auto ite = par.find(del[delp[k]]);
         par.erase(ite);
-        delete del[delp[k]];
+        delete del[delp[k]]; // удаляем сам узел
         del.erase(it);
     }
     }
     qDebug() << del_st;
 }
 
-
+//(добавляем/изменяем вес)
 void MainWindow::on_But_add_clicked()
 {
-    QString first = ui->add_1->text();
-    QString second = ui->add_2->text();
-    QString len = ui->len->text();
-    if (len.size() == 0){
+    QString first = ui->add_1->text();//первый узел
+    QString second = ui->add_2->text();//второй узел
+    QString len = ui->len->text();//вес
+    if (len.size() == 0){//если вес не задается, он по умолчанию один
         len = "1";
     }
-    for (int i = 0; i < len.size(); i++){
+    for (int i = 0; i < len.size(); i++){ //проверка что в весе число
         if( len[i] < '0' || len[i] > '9'){
             QMessageBox::warning(this, "Ошибка", "ВВедено не число в вес");
             return;
         }
     }
-    int len_int = len.toInt();
+    int len_int = len.toInt(); // "123"->123 string to int
     auto it = del.find(first);
     auto it1 = del.find(second);
-    if (it ==  del.end() || it1 ==  del.end()){
+    if (it ==  del.end() || it1 ==  del.end()){ // Есть ли такие узлы
         QMessageBox::warning(this, "Ошибка", "Не найдены узлы");
         return;
     }
+    //Проверка на сущ. ребра. Если есть то изменяем вес, если нет то добавляем
     for (auto iter = par[del[first]].begin(); iter != par[del[first]].end(); iter++){
         if (iter->first == del[second]){
             iter->second = len_int;
@@ -142,17 +144,18 @@ void MainWindow::on_But_add_clicked()
 
 }
 
-
+//удаление ребра
 void MainWindow::on_but_del_reb_clicked()
 {
     QString first = ui->del_1->text();
     QString second = ui->del_2->text();
     auto it = del.find(first);
     auto it1 = del.find(second);
-    if (it ==  del.end() || it1 ==  del.end()){
+    if (it ==  del.end() || it1 ==  del.end()){//проверка на сущ. узлов
         return;
     }
     bool f = false;
+    // Удаление ребра, если нет его, то будет сообщение
     for (auto iter = par[del[first]].begin(); iter != par[del[first]].end(); iter++){
         if (iter->first == del[second]){
             par[del[first]].erase(iter);
@@ -172,10 +175,11 @@ void MainWindow::on_but_del_reb_clicked()
     }
 }
 
-
+//сохранение
 void MainWindow::on_but_save_clicked()
 {
-    QString name = ui->save->text();
+    QString name = ui->save->text();//имя файла
+    // проверка на правильность
     if(name.size() < 5){
         QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .xml");
         return;
@@ -187,12 +191,12 @@ void MainWindow::on_but_save_clicked()
     }
     std::string name_s = name.toLocal8Bit().constData();
     std::ofstream fout;
-    fout.open("/Users/macbook/"+name_s);
+    fout.open(name_s);
     if (fout.is_open() == false){
         QMessageBox::warning(this, "Ошибка", "Не удается открыть файл");
         return;
     }
-    fout << del.size() << std::endl;
+    fout << del.size() << std::endl;//число узлов
     for (auto iter = del.begin(); iter != del.end(); iter++){
         std::string name_uz = (*iter)->name.toLocal8Bit().constData();
         std::string fname = (*iter)->fname.toLocal8Bit().constData();
@@ -204,7 +208,7 @@ void MainWindow::on_but_save_clicked()
     for(auto iter = del.begin(); iter!= del.end(); iter++){
         kol_par+= par[(*iter)].size();
     }
-    fout << kol_par << std::endl;
+    fout << kol_par << std::endl;//число ребер
     for(auto iter = del.begin(); iter != del.end(); iter++){
         for(auto j = par[(*iter)].begin(); j != par[(*iter)].end(); j++){
             std::string fir = (*iter)->name.toLocal8Bit().constData();
@@ -212,17 +216,17 @@ void MainWindow::on_but_save_clicked()
             fout << "<" << fir << "><" << sec << "> " << (*j).second << std::endl;
         }
     }
-    QMessageBox::warning(this, "Ошибка", "Файл сохранен");
+    QMessageBox::warning(this, " ", "Файл сохранен");
     fout.close();
 }
 
-
+// новое имя узла
 void MainWindow::on_but_change_clicked()
 {
-    QString old = ui->old->text();
-    QString new_ = ui->new_2->text();
+    QString old = ui->old->text();//старое
+    QString new_ = ui->new_2->text();//новое
     auto it = del.find(old);
-    if(it == del.end()){
+    if(it == del.end()){//есть ли старое имя
         QMessageBox::warning(this, "Ошибка", "Узла с названием " + old + " нет");
         return;
     }
@@ -230,20 +234,22 @@ void MainWindow::on_but_change_clicked()
         return;
     }
     it = del.find(new_);
-    if(it != del.end()){
+    if(it != del.end()){//есть ли новое
         QMessageBox::warning(this, "Ошибка", "Узел с названием " + new_ + " уже существует");
         return;
     }
+    //смена имени
     del[old]->name = new_;
     del[new_] = del[old];
     it = del.find(old);
     del.erase(it);
 }
 
-
+//загрузка
 void MainWindow::on_but_down_clicked()
 {
     QString name = ui->down->text();
+    //проверка на кор.
     if(name.size() < 5){
         QMessageBox::warning(this, "Ошибка", "Файл должн оканчиватся на .txt .json .xml");
         return;

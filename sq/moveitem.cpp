@@ -30,7 +30,7 @@ QRectF MoveItem::boundingRect() const
 void MoveItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
     painter->setPen(Qt::black);
-    painter->setBrush(Qt::white);
+    painter->setBrush(Qt::green);
     painter->drawRect(-10,-10,40,40);
     Q_UNUSED(option);
     Q_UNUSED(widget);
@@ -38,7 +38,7 @@ void MoveItem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, 
     Q_UNUSED(widget);
     for(auto iter = ((*del)[this]).begin(); ((*del)[this]).end()!= iter; iter++){
         qDebug()<< this->pos();
-        painter->setPen(Qt::white);
+        painter->setPen(Qt::green);
       painter->drawLine(QPointF(0, 0), (*iter).first->pos() - this->pos());
       painter->setPen(Qt::red);
         painter->drawText(((*iter).first->pos() - this->pos())/2, int_to_string(iter->second));
